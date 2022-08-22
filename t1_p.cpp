@@ -1,4 +1,4 @@
-//g++ t1.cpp
+//g++ t1.cpp -pthread
 #include <bits/stdc++.h>
 
 using namespace std;
