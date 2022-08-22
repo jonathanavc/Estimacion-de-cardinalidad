@@ -1,4 +1,4 @@
-//g++ t1.cpp -pthread
+//g++ t1_p.cpp -std=c++11 -lpthread -O3
 #include <bits/stdc++.h>
 
 using namespace std;
@@ -27,6 +27,7 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < (int)pow(2,k); i++) b[i] = 0;
     string s;
     fstream in;
+    size_t sum = 0;
     
     in.open(argv[1]);
     while (in >> s){
@@ -35,10 +36,9 @@ int main(int argc, char const *argv[]){
         if(k == 0) s_k = 0;
         if(threads[s_k].joinable()) threads[s_k].join();
         threads[s_k] = thread(update, b, s_k, s_hashed, k);
-        //update(b, s_k, s_hashed, k);
     }
     for (size_t i = 0; i < (int)pow(2,k); i++) if(threads[i].joinable()) threads[i].join();
-    size_t sum = 0;
+
     for (size_t i = 0; i < (int)pow(2,k); i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];

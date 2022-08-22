@@ -26,6 +26,7 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < (int)pow(2,k); i++) b[i] = 0;
     string s;
     fstream in;
+    size_t sum = 0;
     
     in.open(argv[1]);
     while (in >> s){
@@ -34,7 +35,7 @@ int main(int argc, char const *argv[]){
         if(k == 0) s_k = 0;
         update(b, s_k, s_hashed, k);
     }
-    size_t sum = 0;
+    
     for (size_t i = 0; i < (int)pow(2,k); i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
