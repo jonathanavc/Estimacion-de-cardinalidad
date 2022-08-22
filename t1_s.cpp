@@ -35,7 +35,7 @@ int main(int argc, char const *argv[]){
         update(b, s_k, s_hashed, k);
     }
     size_t sum = 0;
-    for (int i = 0; i < (int)pow(2,k); i++){
+    for (size_t i = 0; i < (int)pow(2,k); i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }

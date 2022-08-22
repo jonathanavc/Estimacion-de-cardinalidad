@@ -23,6 +23,7 @@ int main(int argc, char const *argv[]){
     }
     size_t k = atoi(argv[2]);
     unsigned short * b = new unsigned short[(int)pow(2,k)];
+    thread threads[(int)pow(2,k)];
     for (size_t i = 0; i < (int)pow(2,k); i++) b[i] = 0;
     string s;
     fstream in;
@@ -32,10 +33,13 @@ int main(int argc, char const *argv[]){
         size_t s_hashed = hash<string>{}(s);
         size_t s_k = s_hashed >> (64 - k);
         if(k == 0) s_k = 0;
-        update(b, s_k, s_hashed, k);
+        if(threads[s_k].joinable()) threads[s_k].join();
+        threads[s_k] = thread(update, b, s_k, s_hashed, k);
+        //update(b, s_k, s_hashed, k);
     }
+    for (size_t i = 0; i < (int)pow(2,k); i++) if(threads[i].joinable()) threads[i].join();
     size_t sum = 0;
-    for (int i = 0; i < (int)pow(2,k); i++){
+    for (size_t i = 0; i < (int)pow(2,k); i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }
