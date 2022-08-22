@@ -3,6 +3,7 @@
 
 using namespace std;
 
+short length_line = 81;
 double correcion = 0.7;
 size_t max_1 = (SIZE_MAX>>63)<<63;
 
@@ -17,6 +18,25 @@ void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
     if(n_zeros > b[s_k]) b[s_k] = n_zeros;
 }
 
+void read(int id, string f_name , unsigned short * b, size_t k){
+    string s;
+    fstream in;
+    in.open(f_name);
+    in.seekg(0, ios::end);
+    /*
+    size_t beg = id * length_line;
+    size_t move = (int)length_line * ((int)pow(2, k) - 1);
+    in.seekg(beg, ios::beg);
+    while (in >> s){
+        size_t s_hashed = hash<string>{}(s);
+        size_t s_k = s_hashed >> (64 - k);
+        if(k == 0) s_k = 0;
+        update(b, s_k, s_hashed, k);
+        in.seekg(81 * move);
+    }
+    */
+}
+
 int main(int argc, char const *argv[]){
     if(argc != 3){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_clusters\"" << endl;
@@ -25,18 +45,9 @@ int main(int argc, char const *argv[]){
     unsigned short * b = new unsigned short[(int)pow(2,k)];
     thread threads[(int)pow(2,k)];
     for (size_t i = 0; i < (int)pow(2,k); i++) b[i] = 0;
-    string s;
-    fstream in;
     size_t sum = 0;
-    
-    in.open(argv[1]);
-    while (in >> s){
-        size_t s_hashed = hash<string>{}(s);
-        size_t s_k = s_hashed >> (64 - k);
-        if(k == 0) s_k = 0;
-        if(threads[s_k].joinable()) threads[s_k].join();
-        threads[s_k] = thread(update, b, s_k, s_hashed, k);
-    }
+
+    for (size_t i = 0; i < (int)pow(2,k); i++) threads[i] = thread(read, i, (string)argv[1], b, k);
     for (size_t i = 0; i < (int)pow(2,k); i++) if(threads[i].joinable()) threads[i].join();
 
     for (size_t i = 0; i < (int)pow(2,k); i++){
