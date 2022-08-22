@@ -39,6 +39,6 @@ int main(int argc, char const *argv[]){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }
-    cout << "res: " << pow(2, sum/k) * correcion << endl;
+    cout << "res: " << pow(2, (int)(sum / pow(2,k))) * correcion << endl;
     return 0;
 }

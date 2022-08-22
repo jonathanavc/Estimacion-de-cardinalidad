@@ -28,7 +28,7 @@ int main(int argc, char const *argv[]){
     }
     sketch k = {(unsigned int)atoi(argv[2])};
     sketch * sketches = new sketch[(int)pow(2,k.sketch)];
-    for (size_t i = 0; i < (int)pow(2,k.sketch); i++) sketches[i].sketch = 0;
+    for (size_t i = 0; i < pow(2,k.sketch); i++) sketches[i].sketch = 0;
     string s;
     fstream in;
     
@@ -40,10 +40,10 @@ int main(int argc, char const *argv[]){
         update(sketches, s_k, s_hashed, k);
     }
     sketch sum = {0};
-    for (int i = 0; i < (int)pow(2,k.sketch); i++){
+    for (size_t i = 0; i < pow(2,k.sketch); i++){
         cout <<"buck_"<<i+1<<": "<< sketches[i].sketch << endl;
         sum.sketch += sketches[i].sketch;
     }
-    cout << "res: " << pow(2, sum.sketch/k.sketch) * correcion << endl;
+    cout << "res: " << pow(2, sum.sketch/pow(2, k.sketch)) * correcion << endl;
     return 0;
 }
