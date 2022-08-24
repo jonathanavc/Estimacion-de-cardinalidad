@@ -3,7 +3,7 @@
 
 using namespace std;
 
-double correcion = 0.7;
+double correcion = 0.7; //////////////////////arreglar
 size_t max_1 = (SIZE_MAX>>63)<<63;
 
 unsigned short zeros(size_t s_hashed, size_t k){
@@ -19,11 +19,12 @@ void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
 
 int main(int argc, char const *argv[]){
     if(argc != 3){
-        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_clusters\"" << endl;
+        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets\"" << endl;
     }
-    size_t k = atoi(argv[2]);
-    unsigned short * b = new unsigned short[(int)pow(2,k)];
-    for (size_t i = 0; i < (int)pow(2,k); i++) b[i] = 0;
+    unsigned short k = atoi(argv[2]);
+    unsigned short k_pow = pow(2,k);
+    unsigned short * b = new unsigned short[k_pow];
+    for (size_t i = 0; i < k_pow; i++) b[i] = 0;
     string s;
     fstream in;
     size_t sum = 0;
@@ -35,11 +36,12 @@ int main(int argc, char const *argv[]){
         if(k == 0) s_k = 0;
         update(b, s_k, s_hashed, k);
     }
-    
-    for (size_t i = 0; i < (int)pow(2,k); i++){
+    ///////////////////////////arreglar
+    for (size_t i = 0; i < k_pow; i++){ 
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }
-    cout << "res: " << pow(2, (int)(sum / pow(2,k))) * correcion << endl;
+    cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
+    ///////////////////////////arreglar
     return 0;
 }
