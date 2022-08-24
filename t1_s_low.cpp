@@ -3,7 +3,7 @@
 
 using namespace std;
 
-double correcion = 0.7;
+double correcion = 0.7; ///////////////////////////arreglar
 size_t max_1 = (SIZE_MAX>>63)<<63;
 
 struct sketch{
