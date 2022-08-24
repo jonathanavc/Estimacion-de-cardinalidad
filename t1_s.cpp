@@ -21,27 +21,31 @@ int main(int argc, char const *argv[]){
     if(argc != 3){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets\"" << endl;
     }
-    unsigned short k = atoi(argv[2]);
-    unsigned short k_pow = pow(2,k);
-    unsigned short * b = new unsigned short[k_pow];
-    for (size_t i = 0; i < k_pow; i++) b[i] = 0;
-    string s;
-    fstream in;
     size_t sum = 0;
+    unsigned short k = atoi(argv[2]);
+    unsigned short k_pow = 1<<k;
+    unsigned short * b = new unsigned short[k_pow];
+
+    for (size_t i = 0; i < k_pow; i++) b[i] = 0;
+
+    string s;
+    fstream in(argv[1], ios::in);
     
-    in.open(argv[1]);
-    while (in >> s){
+    if(in.is_open()){
+        while (in >> s){
         size_t s_hashed = hash<string>{}(s);
         size_t s_k = s_hashed >> (64 - k);
         if(k == 0) s_k = 0;
         update(b, s_k, s_hashed, k);
+        }
+        ///////////////////////////arreglar
+        for (size_t i = 0; i < k_pow; i++){ 
+            cout <<"buck_"<<i+1<<": "<< b[i] << endl;
+            sum += b[i];
+        }
+        cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
+        ///////////////////////////arreglar
     }
-    ///////////////////////////arreglar
-    for (size_t i = 0; i < k_pow; i++){ 
-        cout <<"buck_"<<i+1<<": "<< b[i] << endl;
-        sum += b[i];
-    }
-    cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
-    ///////////////////////////arreglar
+    else cout << "No se encontró el archivo " << argv[1] << endl;
     return 0;
 }

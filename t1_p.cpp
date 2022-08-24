@@ -48,7 +48,7 @@ int main(int argc, char const *argv[]){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets\"" << endl;
     }
     unsigned short k = atoi(argv[2]);
-    unsigned short k_pow = pow(2,k);
+    unsigned short k_pow = 1<<k;
     unsigned short * b = new unsigned short[k_pow];
     thread threads[k_pow];
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
