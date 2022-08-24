@@ -26,24 +26,29 @@ int main(int argc, char const *argv[]){
     if(argc != 3){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_clusters\"" << endl;
     }
+    int sum = 0;
     sketch k = {(unsigned int)atoi(argv[2])};
-    sketch * sketches = new sketch[(int)pow(2,k.sketch)];
-    for (size_t i = 0; i < pow(2,k.sketch); i++) sketches[i].sketch = 0;
+    sketch * sketches = new sketch[1<<k.sketch];
+    for (size_t i = 0; i < 1<<k.sketch ; i++) sketches[i].sketch = 0;
+
     string s;
-    fstream in;
+    fstream in(argv[1], ios::in);
     
-    in.open(argv[1]);
-    while (in >> s){
-        size_t s_hashed = hash<string>{}(s);
-        size_t s_k = s_hashed >> (64 - k.sketch);
-        if(k.sketch == 0) s_k = 0;
-        update(sketches, s_k, s_hashed, k);
+    if(in.is_open()){
+        while (in >> s){
+            size_t s_hashed = hash<string>{}(s);
+            size_t s_k = s_hashed >> (64 - k.sketch);
+            if(k.sketch == 0) s_k = 0;
+            update(sketches, s_k, s_hashed, k);
+        }
+        ///////////////////////////arreglar
+        for (size_t i = 0; i < 1<<k.sketch; i++){
+            cout <<"buck_"<<i+1<<": "<< sketches[i].sketch << endl;
+            sum += sketches[i].sketch;
+        }
+        ///////////////////////////arreglar
+        cout << "res: " << pow(2, (int)(sum/1<<k.sketch)) * correcion << endl;
     }
-    sketch sum = {0};
-    for (size_t i = 0; i < pow(2,k.sketch); i++){
-        cout <<"buck_"<<i+1<<": "<< sketches[i].sketch << endl;
-        sum.sketch += sketches[i].sketch;
-    }
-    cout << "res: " << pow(2, sum.sketch/pow(2, k.sketch)) * correcion << endl;
+    else cout << "No se encontró el archivo " << argv[1] << endl;
     return 0;
 }

@@ -21,7 +21,7 @@ int main(int argc, char const *argv[]){
     if(argc != 3){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets\"" << endl;
     }
-    size_t sum = 0;
+    int sum = 0;
     unsigned short k = atoi(argv[2]);
     unsigned short k_pow = 1<<k;
     unsigned short * b = new unsigned short[k_pow];
