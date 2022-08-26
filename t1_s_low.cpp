@@ -24,7 +24,7 @@ void update(sketch * sketches, size_t s_k, size_t s_hashed, sketch k){
 
 int main(int argc, char const *argv[]){
     if(argc != 3){
-        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_clusters\"" << endl;
+        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_clusters < 64\"" << endl;
     }
     int sum = 0;
     sketch k = {(unsigned int)atoi(argv[2])};

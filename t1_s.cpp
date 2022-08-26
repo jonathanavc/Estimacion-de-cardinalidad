@@ -19,7 +19,7 @@ void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
 
 int main(int argc, char const *argv[]){
     if(argc != 3){
-        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets\"" << endl;
+        cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets < 64\"" << endl;
     }
     int sum = 0;
     unsigned short k = atoi(argv[2]);
