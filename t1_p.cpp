@@ -4,9 +4,12 @@
 using namespace std;
 
 mutex _mutex;
-short length_line = 81;
 double correcion = 0.7; //////////////////////arreglar
+unsigned short k_mers = 31;
 size_t max_1 = (SIZE_MAX>>63)<<63;
+size_t _cont = 0;
+chrono::_V2::system_clock::time_point start;
+
 
 unsigned short zeros(size_t s_hashed, size_t k){
     unsigned short cont = k;
@@ -26,30 +29,49 @@ void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
 void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned short n_threads){
     string s;
     fstream in;
-    in.open(f_name);
+    in.open(f_name, ios::in);
     in.seekg(0, ios::end);
 
     size_t size = in.tellg();
+    size_t max = size / n_threads;
+    size_t beg = id * max;
     size_t cont = 0;
 
-    size_t max = size/(length_line * n_threads);
-    size_t beg = id * max;
-
-    _mutex.lock();
-    cout << "id:" << id << ",beg:" << beg << endl;
-    _mutex.unlock();
-    //size_t move = (int)length_line * ((int)pow(2, k) - 1);
     in.seekg(beg, ios::beg);
-    while (in >> s && cont < max){
-        if(s.length()!=80) {
+
+    char c;
+    queue<char> s_queue;
+
+    while (in >> c && cont < max){
+        if(cont%(size / 1000) == 0 && cont != 0){
+            system("clear");
+            chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
             _mutex.lock();
-            cout <<"Error id:"<< id << "s:" << s << endl;
-            _mutex.unlock();    
+            _cont += (size / 1000);
+            cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+            _mutex.unlock();
         }
-        size_t s_hashed = hash<string>{}(s);
-        size_t s_k = s_hashed >> (64 - k);
-        if(k == 0) s_k = 0;
-        update(b, s_k, s_hashed, k);
+        if(c != 'A' && c != 'C' && c != 'T' && c != 'G') {
+            s_queue = queue<char>();            //vaciar cola;
+        }
+        else{
+            if(s_queue.size() == k_mers) s_queue.pop();
+            s_queue.push(c);
+            if(s_queue.size() == k_mers){
+                string s;
+                for (short i = 0; i < k_mers; i++){
+                    char aux = s_queue.front();
+                    s_queue.pop();
+                    s.push_back(aux);
+                    s_queue.push(aux);
+                }
+                //cout << s << endl;
+                size_t s_hashed = hash<string>{}(s);
+                size_t s_k = s_hashed >> (64 - k);
+                if(k == 0) s_k = 0;
+                update(b, s_k, s_hashed, k);
+            }
+        }
         cont++;
     }
 }
@@ -67,16 +89,17 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
     size_t sum = 0;
 
+    start = chrono::system_clock::now();
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
     read(n_threads, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
 
-//////////////////////arreglar
+    //////////////////////arreglar
     for (size_t i = 0; i < k_pow; i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }
     cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
-//////////////////////arreglar
+    //////////////////////arreglar
     return 0;
 }

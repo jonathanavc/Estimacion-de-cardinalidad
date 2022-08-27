@@ -1,9 +1,11 @@
 //g++ t1.cpp
 #include <bits/stdc++.h>
+#include <queue>
 
 using namespace std;
 
 double correcion = 0.7; //////////////////////arreglar
+unsigned short k_mers = 31;
 size_t max_1 = (SIZE_MAX>>63)<<63;
 
 unsigned short zeros(size_t s_hashed, size_t k){
@@ -20,23 +22,59 @@ void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
 int main(int argc, char const *argv[]){
     if(argc != 3){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets < 64\"" << endl;
+        return 1;
     }
     int sum = 0;
     unsigned short k = atoi(argv[2]);
-    unsigned short k_pow = 1<<k;
+    if(k > 64 || k < 0){
+        cout <<  "N°bits_buckets < 64" << endl;
+        return 1;
+    }
+    size_t k_pow = 1<<k;
     unsigned short * b = new unsigned short[k_pow];
-
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
 
-    string s;
     fstream in(argv[1], ios::in);
-    
+
+    in.seekg(0, ios::end);
+
+    size_t size = in.tellg();
+    size_t cont = 0;
+    chrono::_V2::system_clock::time_point start = chrono::system_clock::now();
+
+    in.seekg(0, ios::beg);
+
     if(in.is_open()){
-        while (in >> s){
-        size_t s_hashed = hash<string>{}(s);
-        size_t s_k = s_hashed >> (64 - k);
-        if(k == 0) s_k = 0;
-        update(b, s_k, s_hashed, k);
+        char c;
+        queue<char> s_queue;
+        while (in >> c){
+            if(cont%(size / 1000) == 0 && cont != 0){
+                system("clear");
+                chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+                cout <<"["<< ((float)cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)cont/size) - duration.count()/60000 <<"m"<< endl;
+            }
+            if(c != 'A' && c != 'C' && c != 'T' && c != 'G') {
+                s_queue = queue<char>();            //vaciar cola;
+            }
+            else{
+                if(s_queue.size() == k_mers) s_queue.pop();
+                s_queue.push(c);
+                if(s_queue.size() == k_mers){
+                    string s;
+                    for (short i = 0; i < k_mers; i++){
+                        char aux = s_queue.front();
+                        s_queue.pop();
+                        s.push_back(aux);
+                        s_queue.push(aux);
+                    }
+                    //cout << s << endl;
+                    size_t s_hashed = hash<string>{}(s);
+                    size_t s_k = s_hashed >> (64 - k);
+                    if(k == 0) s_k = 0;
+                    update(b, s_k, s_hashed, k);
+                }
+            }
+            cont++;
         }
         ///////////////////////////arreglar
         for (size_t i = 0; i < k_pow; i++){ 
@@ -46,6 +84,9 @@ int main(int argc, char const *argv[]){
         cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
         ///////////////////////////arreglar
     }
-    else cout << "No se encontró el archivo " << argv[1] << endl;
+    else{
+        cout << "No se encontró el archivo " << argv[1] << endl;
+        return 1;
+    }
     return 0;
 }
