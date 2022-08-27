@@ -36,12 +36,46 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
     size_t max = size / n_threads;
     size_t beg = id * max;
     size_t cont = 0;
+    size_t cont_2 = 0;
+    size_t lines = 0;
 
     in.seekg(beg, ios::beg);
-
-    char c;
-    queue<char> s_queue;
-
+    string aux;
+    while (in >> aux && cont < max){
+        cont += aux.length();
+        if(cont > max); ///////////////////////////quitar chars
+        if(lines%10000 == 0 && lines != 0){
+            chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+            _mutex.lock();
+            _cont += cont_2;
+            system("clear");
+            cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+            _mutex.unlock();
+            cont_2 = 0;
+        }
+        if(aux.length() >= k_mers){
+            for(short i = 0; i < aux.length() - k_mers + 1; i++){
+                string s;
+                bool valido = 1;
+                for (short j = i; j < i + k_mers; j++){
+                    if(aux[j] != 'A' && aux[j] != 'C' && aux[j] != 'T' && aux[j] != 'G'){
+                        valido = false;
+                        break;
+                    }
+                    s.push_back(aux[j]);
+                }
+                if(valido){
+                    size_t s_hashed = hash<string>{}(s);
+                    size_t s_k = s_hashed >> (64 - k);
+                    if(k == 0) s_k = 0;
+                    update(b, s_k, s_hashed, k);
+                }
+            }
+        }
+        lines++;
+        cont_2 += aux.length();
+    }
+    /*
     while (in >> c && cont < max){
         if(cont%(size / 1000) == 0 && cont != 0){
             system("clear");
@@ -73,15 +107,20 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
             }
         }
         cont++;
-    }
+        */
 }
 //////////////////////arreglar
 
 int main(int argc, char const *argv[]){
     if(argc != 4){
         cout << "Modo de uso " << argv[0] << "  \"nombre_archivo\"  \"(int)N°bits_buckets < 64\" \"N°threads < 256\"" << endl;
+        return 1;
     }
     unsigned short k = atoi(argv[2]);
+    if(k > 64 || k < 0){
+        cout <<  "N°bits_buckets < 64" << endl;
+        return 1;
+    }
     unsigned short n_threads = atoi(argv[3]);
     unsigned short k_pow = 1<<k;
     unsigned short * b = new unsigned short[k_pow];

@@ -1,6 +1,5 @@
 //g++ t1.cpp
 #include <bits/stdc++.h>
-#include <queue>
 
 using namespace std;
 
@@ -40,41 +39,40 @@ int main(int argc, char const *argv[]){
 
     size_t size = in.tellg();
     size_t cont = 0;
+    size_t lines = 0;
     chrono::_V2::system_clock::time_point start = chrono::system_clock::now();
 
     in.seekg(0, ios::beg);
 
     if(in.is_open()){
-        char c;
-        queue<char> s_queue;
-        while (in >> c){
-            if(cont%(size / 1000) == 0 && cont != 0){
+        string aux;
+        while (in >> aux){
+            if(lines%10000 == 0 && lines != 0){
                 system("clear");
                 chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
                 cout <<"["<< ((float)cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)cont/size) - duration.count()/60000 <<"m"<< endl;
             }
-            if(c != 'A' && c != 'C' && c != 'T' && c != 'G') {
-                s_queue = queue<char>();            //vaciar cola;
-            }
-            else{
-                if(s_queue.size() == k_mers) s_queue.pop();
-                s_queue.push(c);
-                if(s_queue.size() == k_mers){
+            if(aux.length() >= k_mers){
+                for(short i = 0; i < aux.length() - k_mers + 1; i++){
                     string s;
-                    for (short i = 0; i < k_mers; i++){
-                        char aux = s_queue.front();
-                        s_queue.pop();
-                        s.push_back(aux);
-                        s_queue.push(aux);
+                    bool valido = 1;
+                    for (short j = i; j < i + k_mers; j++){
+                        if(aux[j] != 'A' && aux[j] != 'C' && aux[j] != 'T' && aux[j] != 'G'){
+                            valido = false;
+                            break;
+                        }
+                        s.push_back(aux[j]);
                     }
-                    //cout << s << endl;
-                    size_t s_hashed = hash<string>{}(s);
-                    size_t s_k = s_hashed >> (64 - k);
-                    if(k == 0) s_k = 0;
-                    update(b, s_k, s_hashed, k);
+                    if(valido){
+                        size_t s_hashed = hash<string>{}(s);
+                        size_t s_k = s_hashed >> (64 - k);
+                        if(k == 0) s_k = 0;
+                        update(b, s_k, s_hashed, k);
+                    }
                 }
             }
-            cont++;
+            cont += aux.length();
+            lines++;
         }
         ///////////////////////////arreglar
         for (size_t i = 0; i < k_pow; i++){ 
