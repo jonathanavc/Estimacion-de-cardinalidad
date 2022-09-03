@@ -10,24 +10,14 @@ size_t max_1 = (SIZE_MAX>>63)<<63;
 size_t _cont = 0;
 chrono::_V2::system_clock::time_point start;
 
-
-unsigned short zeros(size_t s_hashed, size_t k){
-    unsigned short cont = k;
-    while (((s_hashed <<cont) & max_1) != max_1 && cont != 64 - k) cont++;
-    return cont - k + 1;
-}
-
 void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
-    unsigned short n_zeros = zeros(s_hashed, k);
+    unsigned short n_zeros = __builtin_clz(s_hashed<<k);
     _mutex.lock();
     if(n_zeros > b[s_k]) b[s_k] = n_zeros;
     _mutex.unlock();
 }
 
-//////////////////////arreglar (no se lee todo el archivo)
-
 void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned short n_threads){
-    string s;
     fstream in;
     in.open(f_name, ios::in);
     in.seekg(0, ios::end);
@@ -42,8 +32,16 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
     in.seekg(beg, ios::beg);
     string aux;
     while (in >> aux && cont < max){
+        //TODO EL TEXTO LEIDO A MAYUSCULAS
+        transform(aux.begin(),aux.end(),aux.begin(),::toupper);
         cont += aux.length();
-        if(cont > max); ///////////////////////////quitar chars
+
+        //QUITAR ELEMENTOS QUE NO DEBERÍA LEER LA HEBRA
+        if(cont > max) 
+            for (short i = 0; i < cont - max; i++) 
+                aux.pop_back();
+
+        //TEXTO DE PROGRESO
         if(lines%10000 == 0 && lines != 0){
             chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
             _mutex.lock();
@@ -53,7 +51,10 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
             _mutex.unlock();
             cont_2 = 0;
         }
+
+        //PROCESAR SI EL TEXTO ES MAYOR A K_MERS
         if(aux.length() >= k_mers){
+            //SE DIVIDE EL TEXTO EN SUB-STRING DE TAMAÑO K_MERS
             for(short i = 0; i < aux.length() - k_mers + 1; i++){
                 string s;
                 bool valido = 1;
@@ -64,6 +65,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
                     }
                     s.push_back(aux[j]);
                 }
+                //SI EL TEXTO SOLO CONTIENE CARACTERES VALIDOS SE PROCESA
                 if(valido){
                     size_t s_hashed = hash<string>{}(s);
                     size_t s_k = s_hashed >> (64 - k);
@@ -75,41 +77,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
         lines++;
         cont_2 += aux.length();
     }
-    /*
-    while (in >> c && cont < max){
-        if(cont%(size / 1000) == 0 && cont != 0){
-            system("clear");
-            chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
-            _mutex.lock();
-            _cont += (size / 1000);
-            cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
-            _mutex.unlock();
-        }
-        if(c != 'A' && c != 'C' && c != 'T' && c != 'G') {
-            s_queue = queue<char>();            //vaciar cola;
-        }
-        else{
-            if(s_queue.size() == k_mers) s_queue.pop();
-            s_queue.push(c);
-            if(s_queue.size() == k_mers){
-                string s;
-                for (short i = 0; i < k_mers; i++){
-                    char aux = s_queue.front();
-                    s_queue.pop();
-                    s.push_back(aux);
-                    s_queue.push(aux);
-                }
-                //cout << s << endl;
-                size_t s_hashed = hash<string>{}(s);
-                size_t s_k = s_hashed >> (64 - k);
-                if(k == 0) s_k = 0;
-                update(b, s_k, s_hashed, k);
-            }
-        }
-        cont++;
-        */
 }
-//////////////////////arreglar
 
 int main(int argc, char const *argv[]){
     if(argc != 4){
@@ -122,23 +90,27 @@ int main(int argc, char const *argv[]){
         return 1;
     }
     unsigned short n_threads = atoi(argv[3]);
-    unsigned short k_pow = 1<<k;
-    unsigned short * b = new unsigned short[k_pow];
+    unsigned short k_pow = 1<<k;                            // = 2^K
+    unsigned short * b = new unsigned short[k_pow];         // BUCKETS
     thread threads[n_threads];
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
-    size_t sum = 0;
 
     start = chrono::system_clock::now();
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
     read(n_threads, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
+    auto duration = chrono::system_clock::now() - start;
+    //cout <<"[100%]"<< "Tiempo total:" << (duration.count()/60000)<<"m"<< endl;
+    cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "<< std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
 
     //////////////////////arreglar
+    size_t sum = 0;
     for (size_t i = 0; i < k_pow; i++){
         cout <<"buck_"<<i+1<<": "<< b[i] << endl;
         sum += b[i];
     }
     cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
     //////////////////////arreglar
+
     return 0;
 }

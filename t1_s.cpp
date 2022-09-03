@@ -47,6 +47,7 @@ int main(int argc, char const *argv[]){
     if(in.is_open()){
         string aux;
         while (in >> aux){
+            transform(aux.begin(),aux.end(),aux.begin(),::toupper);
             if(lines%10000 == 0 && lines != 0){
                 system("clear");
                 chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
