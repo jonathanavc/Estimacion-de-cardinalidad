@@ -10,11 +10,9 @@ size_t _cont = 0;
 short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
-void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
+void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
     unsigned short n_zeros = __builtin_clz(s_hashed<<k);
-    _mutex.lock();
-    if(n_zeros > b[s_k]) b[s_k] = n_zeros;
-    _mutex.unlock();
+    if(n_zeros > b[id * k + s_k]) b[id * k + s_k] = n_zeros;
 }
 
 void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned short n_threads){
@@ -31,12 +29,14 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
 
     in.seekg(beg, ios::beg);
     string aux;
+    
     while (in >> aux && cont < max){
         //TODO EL TEXTO LEIDO A MAYUSCULAS
         transform(aux.begin(),aux.end(),aux.begin(),::toupper);
         cont += aux.length();
 
         //QUITAR ELEMENTOS QUE NO DEBERÍA LEER LA HEBRA
+        // ESTÁ MALO 
         if(cont > max) 
             for (short i = 0; i < cont - max; i++) 
                 aux.pop_back();
@@ -55,7 +55,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
             }
 
             _mutex.unlock();
-            
+
             if(_cout){
                 chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
                 system("clear");
@@ -83,7 +83,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
                     size_t s_hashed = hash<string>{}(s);
                     size_t s_k = s_hashed >> (64 - k);
                     if(k == 0) s_k = 0;
-                    update(b, s_k, s_hashed, k);
+                    update(id, b, s_k, s_hashed, k);
                 }
             }
         }
@@ -104,7 +104,7 @@ int main(int argc, char const *argv[]){
     }
     unsigned short n_threads = atoi(argv[3]);
     unsigned short k_pow = 1<<k;                            // = 2^K
-    unsigned short * b = new unsigned short[k_pow];         // BUCKETS
+    unsigned short * b = new unsigned short[k_pow * n_threads];         // BUCKETS
     thread threads[n_threads];
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
 
