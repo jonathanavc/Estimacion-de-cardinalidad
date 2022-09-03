@@ -21,10 +21,10 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
     in.seekg(0, ios::end);
 
     size_t size = in.tellg();
-    size_t max = size / n_threads;
+    size_t max = in.tellg() / n_threads;
     size_t beg = id * max;
     size_t cont = 0;
-    size_t cont_2 = 0;
+    size_t cont_aux = 0;
     size_t lines = 0;
 
     in.seekg(beg, ios::beg);
@@ -41,7 +41,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
 
             _mutex.lock();
 
-            _cont += cont_2;
+            _cont += cont_aux;
             _thread++;
             if(_thread == n_threads){
                 _cout = 1;
@@ -56,7 +56,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
                 cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
                 _thread = 0;
             }
-            cont_2 = 0;
+            cont_aux = 0;
         }
 
         //PROCESAR SI EL TEXTO ES MAYOR A K_MERS
@@ -82,7 +82,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
             }
         }
         lines++;
-        cont_2 += aux.length();
+        cont_aux += aux.length();
     }
 }
 
