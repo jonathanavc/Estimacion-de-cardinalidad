@@ -3,7 +3,7 @@
 
 using namespace std;
 
-double correcion = 0.7; //////////////////////arreglar
+double correcion = 0.7; ///////////////////// arreglar
 unsigned short k_mers = 31;
 size_t max_1 = (SIZE_MAX>>63)<<63;
 
@@ -41,17 +41,17 @@ int main(int argc, char const *argv[]){
     size_t cont = 0;
     size_t lines = 0;
     chrono::_V2::system_clock::time_point start = chrono::system_clock::now();
-
-    in.seekg(0, ios::beg);
-
+    
+    in.seekg(0, ios::beg);    
+    
     if(in.is_open()){
         string aux;
         while (in >> aux){
-            if(lines%10000 == 0 && lines != 0){
-                system("clear");
-                chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
-                cout <<"["<< ((float)cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)cont/size) - duration.count()/60000 <<"m"<< endl;
-            }
+            // if(lines%10000 == 0 && lines != 0){
+                // system("clear");
+                // chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+                // cout <<"["<< ((float)cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)cont/size) - duration.count()/60000 <<"m"<< endl;
+            // }
             if(aux.length() >= k_mers){
                 for(short i = 0; i < aux.length() - k_mers + 1; i++){
                     string s;
@@ -76,15 +76,17 @@ int main(int argc, char const *argv[]){
         }
         ///////////////////////////arreglar
         for (size_t i = 0; i < k_pow; i++){ 
-            cout <<"buck_"<<i+1<<": "<< b[i] << endl;
+            // cout <<"buck_"<<i+1<<": "<< b[i] << endl;
             sum += b[i];
         }
-        cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
+        // cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
         ///////////////////////////arreglar
     }
     else{
         cout << "No se encontró el archivo " << argv[1] << endl;
         return 1;
     }
+    chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+    cout << "Tiempo Total secuencial:" << duration.count() /60000 << endl;
     return 0;
 }

@@ -43,16 +43,16 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
     string aux;
     while (in >> aux && cont < max){
         cont += aux.length();
-        if(cont > max); ///////////////////////////quitar chars
-        if(lines%10000 == 0 && lines != 0){
-            chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
-            _mutex.lock();
-            _cont += cont_2;
-            system("clear");
-            cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
-            _mutex.unlock();
-            cont_2 = 0;
-        }
+        // if(cont > max); ///////////////////////////quitar chars
+        // if(lines%10000 == 0 && lines != 0){
+        //     chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+        //     _mutex.lock();
+        //     _cont += cont_2;
+        //     system("clear");
+        //     cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+        //     _mutex.unlock();
+        //     cont_2 = 0;
+        // }
         if(aux.length() >= k_mers){
             for(short i = 0; i < aux.length() - k_mers + 1; i++){
                 string s;
@@ -129,9 +129,13 @@ int main(int argc, char const *argv[]){
     size_t sum = 0;
 
     start = chrono::system_clock::now();
-    for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
+    for (size_t i = 0; i < n_threads; i++) 
+        threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
     read(n_threads, (string)argv[1], b, k, n_threads);
-    for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
+    // sincronizacion
+    for (size_t i = 0; i < n_threads; i++) 
+        if(threads[i].joinable()) 
+            threads[i].join();
 
     //////////////////////arreglar
     for (size_t i = 0; i < k_pow; i++){
@@ -140,5 +144,7 @@ int main(int argc, char const *argv[]){
     }
     cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
     //////////////////////arreglar
+    chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+    cout <<"["<< "%] Tiempo restante "<< duration.count()/60000 <<"m"<< endl;
     return 0;
 }
