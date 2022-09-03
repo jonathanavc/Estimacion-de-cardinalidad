@@ -35,12 +35,6 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
         transform(aux.begin(),aux.end(),aux.begin(),::toupper);
         cont += aux.length();
 
-        //QUITAR ELEMENTOS QUE NO DEBERÍA LEER LA HEBRA
-        // ESTÁ MALO 
-        if(cont > max) 
-            for (short i = 0; i < cont - max; i++) 
-                aux.pop_back();
-
         //TEXTO DE PROGRESO
         if(lines%10000 == 0 && lines != 0){
             bool _cout = 0;
@@ -103,7 +97,7 @@ int main(int argc, char const *argv[]){
         return 1;
     }
     unsigned short n_threads = atoi(argv[3]);
-    unsigned short k_pow = 1<<k;                            // = 2^K
+    unsigned short k_pow = 1<<k;                                        // = 2^K
     unsigned short * b = new unsigned short[k_pow * n_threads];         // BUCKETS
     thread threads[n_threads];
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
@@ -113,7 +107,7 @@ int main(int argc, char const *argv[]){
     read(n_threads, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
     auto duration = chrono::system_clock::now() - start;
-    //cout <<"[100%]"<< "Tiempo total:" << (duration.count()/60000)<<"m"<< endl;
+
     cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
         << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
 

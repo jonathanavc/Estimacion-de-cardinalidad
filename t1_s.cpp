@@ -1,4 +1,4 @@
-//g++ t1.cpp
+//g++ t1_s.cpp -std=c++11 -O3
 #include <bits/stdc++.h>
 
 using namespace std;
