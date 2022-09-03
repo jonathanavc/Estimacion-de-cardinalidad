@@ -120,5 +120,6 @@ int main(int argc, char const *argv[]){
     cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
     //////////////////////arreglar
 
+    free(b);
     return 0;
 }
