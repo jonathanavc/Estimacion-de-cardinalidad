@@ -7,6 +7,7 @@ mutex _mutex;
 double correcion = 0.7; //////////////////////arreglar
 unsigned short k_mers = 31;
 size_t _cont = 0;
+short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
 void update(unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
@@ -42,12 +43,25 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
 
         //TEXTO DE PROGRESO
         if(lines%10000 == 0 && lines != 0){
-            chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+            bool _cout = 0;
+
             _mutex.lock();
+
             _cont += cont_2;
-            system("clear");
-            cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+            _thread++;
+            if(_thread == n_threads){
+                _cout = 1;
+                _thread = 0;
+            }
+
             _mutex.unlock();
+            
+            if(_cout){
+                chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
+                system("clear");
+                cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+                _thread = 0;
+            }
             cont_2 = 0;
         }
 
@@ -100,7 +114,8 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
     auto duration = chrono::system_clock::now() - start;
     //cout <<"[100%]"<< "Tiempo total:" << (duration.count()/60000)<<"m"<< endl;
-    cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "<< std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
+    cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
+        << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
 
     //////////////////////arreglar
     size_t sum = 0;
