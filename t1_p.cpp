@@ -6,7 +6,6 @@ using namespace std;
 mutex _mutex;
 double correcion = 0.7; //////////////////////arreglar
 unsigned short k_mers = 31;
-size_t max_1 = (SIZE_MAX>>63)<<63;
 size_t _cont = 0;
 chrono::_V2::system_clock::time_point start;
 
