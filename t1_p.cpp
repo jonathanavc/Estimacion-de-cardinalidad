@@ -10,8 +10,10 @@ size_t _cont = 0;
 short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
+
+
 void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k_pow, unsigned short k){
-    unsigned short n_zeros = __builtin_clz(s_hashed<<k);
+    unsigned short n_zeros = __builtin_clzll(s_hashed<<k);
     if(n_zeros > b[id * k_pow + s_k]) b[id * k_pow + s_k] = n_zeros;
 }
 
