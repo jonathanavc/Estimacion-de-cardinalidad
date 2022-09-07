@@ -4,16 +4,15 @@
 using namespace std;
 
 mutex _mutex;
-double correcion = 0.7; //////////////////////arreglar
+double correcion = 0.78; //////////////////////arreglar
 unsigned short k_mers = 31;
 size_t _cont = 0;
 short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
 
-
 void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k_pow, unsigned short k){
-    unsigned short n_zeros = __builtin_clzll(s_hashed<<k);
+    unsigned short n_zeros = __builtin_clzll(s_hashed<<k) + 1;
     if(n_zeros > b[id * k_pow + s_k]) b[id * k_pow + s_k] = n_zeros;
 }
 
@@ -103,7 +102,7 @@ int main(int argc, char const *argv[]){
     size_t k_pow = (size_t)1<<k;                                        // = 2^K
     unsigned short * b = new unsigned short[k_pow * n_threads];         // BUCKETS
     thread threads[n_threads];
-    for (size_t i = 0; i < k_pow; i++) b[i] = 0;
+    for (size_t i = 0; i < k_pow * n_threads; i++) b[i] = 0;
 
     start = chrono::system_clock::now();
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
