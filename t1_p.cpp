@@ -10,9 +10,9 @@ size_t _cont = 0;
 short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
-void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k){
+void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k_pow, unsigned short k){
     unsigned short n_zeros = __builtin_clz(s_hashed<<k);
-    if(n_zeros > b[id * k + s_k]) b[id * k + s_k] = n_zeros;
+    if(n_zeros > b[id * k_pow + s_k]) b[id * k_pow + s_k] = n_zeros;
 }
 
 void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned short n_threads){
@@ -23,6 +23,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
     size_t size = in.tellg();
     size_t max = in.tellg() / n_threads;
     size_t beg = id * max;
+    if(id == n_threads - 1) max = SIZE_MAX;
     size_t cont = 0;
     size_t cont_aux = 0;
     size_t lines = 0;
@@ -77,7 +78,7 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
                     size_t s_hashed = hash<string>{}(s);
                     size_t s_k = s_hashed >> (64 - k);
                     if(k == 0) s_k = 0;
-                    update(id, b, s_k, s_hashed, k);
+                    update(id, b, s_k, s_hashed, (size_t)1<<k, k);
                 }
             }
         }
@@ -97,28 +98,40 @@ int main(int argc, char const *argv[]){
         return 1;
     }
     unsigned short n_threads = atoi(argv[3]);
-    unsigned short k_pow = 1<<k;                                        // = 2^K
+    size_t k_pow = (size_t)1<<k;                                        // = 2^K
     unsigned short * b = new unsigned short[k_pow * n_threads];         // BUCKETS
     thread threads[n_threads];
     for (size_t i = 0; i < k_pow; i++) b[i] = 0;
 
     start = chrono::system_clock::now();
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
-    read(n_threads, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
     auto duration = chrono::system_clock::now() - start;
 
     cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
         << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
 
-    //////////////////////arreglar
-    size_t sum = 0;
+    //////////////////////ojo
+    unsigned short buckets[k_pow];
     for (size_t i = 0; i < k_pow; i++){
-        cout <<"buck_"<<i+1<<": "<< b[i] << endl;
-        sum += b[i];
+        unsigned short _max = 0;
+        for (size_t j = 0; j < n_threads; j++){
+            _max = max(b[j * k_pow + i], _max);
+        }
+        buckets[i] = _max;
     }
-    cout << "res: " << pow(2, (int)(sum / k_pow)) * correcion << endl;
-    //////////////////////arreglar
+    
+    double sum = 0;
+    for (size_t i = 0; i < k_pow; i++){
+        cout <<"buck_"<<i+1<<": "<< buckets[i] << endl;
+        sum += (double)1/(double)buckets[i];
+        cout << "sum:" << sum << endl;
+    }
+
+    
+    double res = pow(2, (double)k_pow/sum) * correcion;
+    cout << "res: " << res << endl;
+    //////////////////////ojo
 
     free(b);
     return 0;
