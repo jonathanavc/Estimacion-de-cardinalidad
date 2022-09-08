@@ -1,12 +1,11 @@
-//g++ t1_p.cpp -std=c++11 -lpthread -O3
+//g++ hll_p.cpp -std=c++11 -lpthread -O3
 #include <bits/stdc++.h>
 
 using namespace std;
 
 mutex _mutex;
-double correcion = 0.78; //////////////////////arreglar
 unsigned short k_mers = 31;
-size_t _cont = 0;
+size_t global_cont = 0;
 short _thread = 0;
 chrono::_V2::system_clock::time_point start;
 
@@ -17,48 +16,44 @@ void update(int id, unsigned short * b, size_t s_k, size_t s_hashed, size_t k_po
 }
 
 void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned short n_threads){
-    fstream in;
-    in.open(f_name, ios::in);
-    in.seekg(0, ios::end);
+    fstream archivo_entrada;
+    archivo_entrada.open(f_name, ios::in);
+    archivo_entrada.seekg(0, ios::end);
 
-    size_t size = in.tellg();
-    size_t max = in.tellg() / n_threads;
+    size_t size = archivo_entrada.tellg();
+    size_t max = archivo_entrada.tellg() / n_threads;
     size_t beg = id * max;
     if(id == n_threads - 1) max = SIZE_MAX;
-    size_t cont = 0;
-    size_t cont_aux = 0;
+    size_t thread_cont = 0;
+    size_t aux_cont = 0;
     size_t lines = 0;
 
-    in.seekg(beg, ios::beg);
+    archivo_entrada.seekg(beg, ios::beg);
     string aux;
     
-    while (in >> aux && cont < max){
+    while (archivo_entrada >> aux && thread_cont < max){
         //TODO EL TEXTO LEIDO A MAYUSCULAS
         transform(aux.begin(),aux.end(),aux.begin(),::toupper);
-        cont += aux.length();
-
         //TEXTO DE PROGRESO
         if(lines%10000 == 0 && lines != 0){
             bool _cout = 0;
 
             _mutex.lock();
-
-            _cont += cont_aux;
+            global_cont += aux_cont;
             _thread++;
             if(_thread == n_threads){
                 _cout = 1;
                 _thread = 0;
             }
-
             _mutex.unlock();
 
             if(_cout){
                 chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
                 system("clear");
-                cout <<"["<< ((float)_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)_cont/size) - duration.count()/60000 <<"m"<< endl;
+                cout <<"["<< ((float)global_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)global_cont/size) - duration.count()/60000 <<"m"<< endl;
                 _thread = 0;
             }
-            cont_aux = 0;
+            aux_cont = 0;
         }
 
         //PROCESAR SI EL TEXTO ES MAYOR A K_MERS
@@ -83,9 +78,40 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
                 }
             }
         }
+        thread_cont += aux.length();
+        aux_cont += aux.length();
         lines++;
-        cont_aux += aux.length();
     }
+}
+
+
+double resultado(unsigned short * b, size_t k_pow, unsigned short n_threads){
+    double alpha;
+    unsigned short buckets[k_pow];
+    for (size_t i = 0; i < k_pow; i++){
+        unsigned short _max = 0;
+        for (size_t j = 0; j < n_threads; j++) _max = max(b[j * k_pow + i], _max);
+        buckets[i] = _max;
+    }
+    double res = 0;
+    for (size_t i = 0; i < k_pow; i++){
+        res += 1/pow(2,buckets[i]);
+    }
+    switch (k_pow) {
+        case 16:
+            alpha = 0.673;
+            break;
+        case 32:
+            alpha = 0.697;
+            break;
+        case 64:
+            alpha = 0.709;
+            break;
+        default:
+            alpha = 0.7213 / (1.0 + 1.079 / k_pow);
+            break;
+    }
+    return (pow(k_pow, 2)/res) * alpha;
 }
 
 int main(int argc, char const *argv[]){
@@ -108,31 +134,11 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
     auto duration = chrono::system_clock::now() - start;
-
+    
+    system("clear");
     cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
         << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
-
-    //////////////////////ojo
-    unsigned short buckets[k_pow];
-    for (size_t i = 0; i < k_pow; i++){
-        unsigned short _max = 0;
-        for (size_t j = 0; j < n_threads; j++){
-            _max = max(b[j * k_pow + i], _max);
-        }
-        buckets[i] = _max;
-    }
-    
-    double sum = 0;
-    for (size_t i = 0; i < k_pow; i++){
-        cout <<"buck_"<<i+1<<": "<< buckets[i] << endl;
-        sum += (double)1/(double)buckets[i];
-        cout << "sum:" << sum << endl;
-    }
-
-    
-    double res = pow(2, (double)k_pow/sum) * correcion;
-    cout << "res: " << res << endl;
-    //////////////////////ojo
+    cout << "res: " << resultado(b, k_pow, n_threads) << endl;
 
     free(b);
     return 0;
