@@ -48,9 +48,10 @@ void read(int id, string f_name , unsigned short * b, unsigned short k, unsigned
             _mutex.unlock();
 
             if(_cout){
+                printf("\33[2K\r");
                 chrono::duration<float,milli> duration = chrono::system_clock::now() - start;
-                system("clear");
                 cout <<"["<< ((float)global_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)global_cont/size) - duration.count()/60000 <<"m"<< endl;
+                cout<<"\e[A";
                 _thread = 0;
             }
             aux_cont = 0;
@@ -134,8 +135,8 @@ int main(int argc, char const *argv[]){
     for (size_t i = 0; i < n_threads; i++) threads[i] = thread(read, i, (string)argv[1], b, k, n_threads);
     for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
     auto duration = chrono::system_clock::now() - start;
-    
-    system("clear");
+
+    printf("\33[2K\r");
     cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
         << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << endl;
     cout << "res: " << resultado(b, k_pow, n_threads) << endl;
