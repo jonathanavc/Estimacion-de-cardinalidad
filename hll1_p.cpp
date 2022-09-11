@@ -1,4 +1,4 @@
-//g++ hll_p.cpp -std=c++11 -lpthread -O3
+//g++ hll1_p.cpp -std=c++11 -lpthread -O3
 #include <bits/stdc++.h>
 
 using namespace std;
