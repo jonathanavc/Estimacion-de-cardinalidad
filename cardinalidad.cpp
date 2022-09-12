@@ -1,7 +1,7 @@
 #include <bits/stdc++.h>
 
-class hyperloglog {
-    private:
+class cardinalidad{
+    protected:
         bool resultado_ready;
         bool calcular_ready;
         size_t k_pow;
@@ -15,10 +15,7 @@ class hyperloglog {
         std::string f_name;
         std::mutex _mutex;
         std::chrono::_V2::system_clock::time_point start;
-        void update(int id, size_t s_k, size_t s_hashed){
-            unsigned short n_zeros = __builtin_clzll(s_hashed<<k) + 1;
-            if(n_zeros > b[id * k_pow + s_k]) b[id * k_pow + s_k] = n_zeros;
-        }
+        virtual void update(int id, size_t s_k, size_t s_hashed) = 0;
         void read(int id){
             std::fstream archivo_entrada(f_name, std::ios_base::in);
             archivo_entrada.seekg(0, std::ios::end);
@@ -82,22 +79,19 @@ class hyperloglog {
             }
         }
     public:
-        hyperloglog(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31){
+        explicit cardinalidad(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31){
             this->f_name = f_name;
             this->k = k;
             this->k_mers = k_mers;
             this->k_pow = (size_t)1<<k;
             this->n_threads = n_threads;
-            this->buckets = new unsigned short[k_pow];
-            this->b = new unsigned short[k_pow * n_threads];
+
             _thread = 0;
             global_cont = 0;
             calcular_ready = 0;
             resultado_ready = 0;
         }
-        ~hyperloglog(){
-            delete b;
-            delete buckets;
+        ~cardinalidad(){
         }
         int calcular(){
             std::cout <<"Pocesando "<< f_name << std::endl;
@@ -106,17 +100,12 @@ class hyperloglog {
             global_cont = 0;
             _thread = 0;
             std::fstream archivo_entrada(f_name, std::ios_base::in);
-            if(!archivo_entrada.is_open()){
-                std::cout << "Error al intentar abrir "<< f_name<< std::endl;
-                return 0;
-            }
 
-            for(size_t i = 0; i < k_pow; i++) buckets[i] = 0;
-            for(size_t i = 0; i < k_pow * n_threads; i++) b[i] = 0;
+            if(!archivo_entrada.is_open()) return 0;
 
             std::thread threads[n_threads];
             start = std::chrono::system_clock::now();
-            for (size_t i = 0; i < n_threads; i++) threads[i] = std::thread(&hyperloglog::read, this, i);
+            for (size_t i = 0; i < n_threads; i++) threads[i] = std::thread(&cardinalidad::read, this, i);
             for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
             auto duration = std::chrono::system_clock::now() - start;
             std::cout << "\33[2K\r";
@@ -124,6 +113,27 @@ class hyperloglog {
                 << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
             calcular_ready = 1;
             return 1;
+        }
+};
+
+class hyperloglog: public cardinalidad{
+    private:
+        unsigned short * buckets = new unsigned short[k_pow];
+        unsigned short * b = new unsigned short[k_pow * n_threads];
+    public:
+        hyperloglog(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31):cardinalidad(f_name,  k, n_threads, k_mers){
+            buckets = new unsigned short[k_pow];
+            b = new unsigned short[k_pow * n_threads];
+            for(size_t i = 0; i < k_pow; i++) buckets[i] = 0;
+            for(size_t i = 0; i < k_pow * n_threads; i++) b[i] = 0;
+        }
+        ~hyperloglog(){
+            delete b;
+            delete buckets;
+        }
+        void update(int id, size_t s_k, size_t s_hashed) override{
+            unsigned short n_zeros = __builtin_clzll(s_hashed<<k) + 1;
+            if(n_zeros > b[id * k_pow + s_k]) b[id * k_pow + s_k] = n_zeros;
         }
         double resultado(){
             if(!calcular_ready) if(!calcular()) return 0;
@@ -148,5 +158,43 @@ class hyperloglog {
                 return NULL;
             }
             return buckets;
+        }
+};
+
+class pcsa: public cardinalidad{
+    private:
+        size_t * buckets;
+        size_t * b;
+        unsigned short R(long x){ //ta bien
+	        return ~x & (x+1);
+        }
+    public:
+        pcsa(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31):cardinalidad(f_name,  k, n_threads, k_mers){
+            buckets = new size_t[k_pow];
+            b = new size_t[k_pow * n_threads];
+            for(size_t i = 0; i < k_pow; i++) buckets[i] = 0;
+            for(size_t i = 0; i < k_pow * n_threads; i++) b[i] = 0;
+        }
+        ~pcsa(){
+            delete b;
+            delete buckets;
+        }
+        using cardinalidad::cardinalidad;
+        void update(int id, size_t s_k, size_t s_hashed) override{
+            b[id * k_pow + s_k] = b[id * k_pow + s_k] | R(s_hashed);
+        }
+        double resultado(){
+            double alpha = 0.77351;
+            if(!calcular_ready) if(!calcular()) return 0;
+            for (size_t i = 0; i < k_pow; i++){
+                unsigned short i_sketch = 0;
+                for (size_t j = 0; j < n_threads; j++) i_sketch = i_sketch | b[j * k_pow + i];
+                buckets[i] = i_sketch;
+            }
+            double res = 0;
+            for (size_t i = 0; i < k_pow; i++) res += __builtin_ctzll(~buckets[i]);
+            res = res/k_pow;
+            resultado_ready = 1;
+            return (k_pow*pow(2,res)/alpha);
         }
 };
