@@ -10,8 +10,6 @@ class cardinalidad{
         unsigned short k_mers;
         unsigned short _thread;
         unsigned short n_threads;
-        unsigned short * b;
-        unsigned short * buckets;
         std::string f_name;
         std::mutex _mutex;
         std::chrono::_V2::system_clock::time_point start;
@@ -42,7 +40,7 @@ class cardinalidad{
                         _thread = 0;
                     }
                     _mutex.unlock();
-                    if(_cout){
+                    if(0){
                         std::cout << "\33[2K\r";
                         std::chrono::duration<float,std::milli> duration = std::chrono::system_clock::now() - start;
                         std::cout <<"["<< ((float)global_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)global_cont/size) - duration.count()/60000 <<"m"<< std::endl;
@@ -94,7 +92,6 @@ class cardinalidad{
         ~cardinalidad(){
         }
         int calcular(){
-            std::cout <<"Pocesando "<< f_name << std::endl;
             resultado_ready = 0;
             calcular_ready = 0;
             global_cont = 0;
@@ -108,9 +105,10 @@ class cardinalidad{
             for (size_t i = 0; i < n_threads; i++) threads[i] = std::thread(&cardinalidad::read, this, i);
             for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
             auto duration = std::chrono::system_clock::now() - start;
-            std::cout << "\33[2K\r";
+            /*std::cout << "\33[2K\r";
             std::cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
-                << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
+                << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;*/
+            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/(double)1000 <<"s;"; 
             calcular_ready = 1;
             return 1;
         }
@@ -165,7 +163,7 @@ class pcsa: public cardinalidad{
     private:
         size_t * buckets;
         size_t * b;
-        unsigned short R(long x){ //ta bien
+        size_t R(size_t x){ //ahora si ta bien
 	        return ~x & (x+1);
         }
     public:
@@ -184,10 +182,10 @@ class pcsa: public cardinalidad{
             b[id * k_pow + s_k] = b[id * k_pow + s_k] | R(s_hashed);
         }
         double resultado(){
-            double alpha = 0.77351;
+            double phi = 0.77351;
             if(!calcular_ready) if(!calcular()) return 0;
             for (size_t i = 0; i < k_pow; i++){
-                unsigned short i_sketch = 0;
+                size_t i_sketch = 0;
                 for (size_t j = 0; j < n_threads; j++) i_sketch = i_sketch | b[j * k_pow + i];
                 buckets[i] = i_sketch;
             }
@@ -195,6 +193,6 @@ class pcsa: public cardinalidad{
             for (size_t i = 0; i < k_pow; i++) res += __builtin_ctzll(~buckets[i]);
             res = res/k_pow;
             resultado_ready = 1;
-            return (k_pow*pow(2,res)/alpha);
+            return (k_pow*pow(2,res)/phi);
         }
 };

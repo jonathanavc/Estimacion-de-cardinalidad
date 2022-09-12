@@ -4,8 +4,8 @@
 
 using namespace std;
 
-const string fn_g1 = "GCF_000001405.39_GRCh38.p13_genomic.fna";
-const string fn_g2 = "GCF_000308155.1_EptFus1.0_genomic.fna";
+string fn_g1 = "GCF_000001405.39_GRCh38.p13_genomic.fna";
+string fn_g2 = "GCF_000308155.1_EptFus1.0_genomic.fna";
 
 double _union(unsigned short k, hyperloglog * g1, hyperloglog * g2){
     size_t k_pow = (size_t)1<<k;
@@ -37,11 +37,13 @@ double _jaccard(unsigned short k, hyperloglog * g1, hyperloglog * g2){
 
 int main(int argc, char const *argv[]){
     unsigned short k_mers = 31;
-    if(argc > 4){
+    if(argc > 5 || argc < 3){
         cout << "Modo de uso " << argv[0] << "\"(int)N°bits_buckets < 64\" \"N°threads < 256\"" << endl;
         return 1;
     }
-    if(argc == 4) unsigned short k_mers = atoi(argv[3]);
+    if(argc > 3) unsigned short k_mers = atoi(argv[3]);
+    if(argc > 4) fn_g1 = argv[4];
+
     unsigned short k = atoi(argv[1]);
     if(k > 64 || k < 0){
         cout <<  "N°bits_buckets < 64" << endl;
@@ -49,11 +51,12 @@ int main(int argc, char const *argv[]){
     }
 
     unsigned short n_threads = atoi(argv[2]);
-
+    cout << argv[1]<<";" << argv[2]<<";" << argv[3]<<";"<< argv[4]<<";"<< "hyperloglog;";
     hyperloglog g1(fn_g1, k, n_threads, k_mers);
     g1.calcular();
     cout << g1.resultado() << endl;
 
+    cout << argv[1]<<";" << argv[2]<<";" << argv[3]<<";"<< argv[4]<<";"<<"pcsa;";
     pcsa g2(fn_g1, k, n_threads, k_mers);
     g2.calcular();
     cout << g2.resultado() << endl;

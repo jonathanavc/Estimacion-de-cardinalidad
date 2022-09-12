@@ -1,0 +1,25 @@
+./a.out 1 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 2 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 3 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 4 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 5 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 6 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 7 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 8 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 9 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 10 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 11 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+./a.out 12 12 31 GCF_000308155.1_EptFus1.0_genomic.fna
+
+./a.out 1 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 2 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 3 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 4 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 5 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 6 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 7 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 8 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 9 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 10 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 11 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
+./a.out 12 12 31 GCF_000001405.39_GRCh38.p13_genomic.fna
