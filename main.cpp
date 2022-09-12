@@ -23,8 +23,16 @@ double _union(unsigned short k, hyperloglog * g1, hyperloglog * g2){
     return (pow(k_pow,2)/res) * alpha;
 }
 
+double _inter(unsigned short k, hyperloglog * g1, hyperloglog * g2){
+    return g1->resultado() + g2->resultado() - _union(k, g1, g2);
+}
+
+double _dif(unsigned short k, hyperloglog * g1, hyperloglog * g2){
+    return _union(k, g1, g2) - _inter(k, g1, g2);
+}
+
 double _jaccard(unsigned short k, hyperloglog * g1, hyperloglog * g2){
-    return ( g1->resultado() + g2->resultado() - _union(k, g1, g2) ) / _union(k, g1, g2);
+    return _inter(k, g1, g2) / _union(k, g1, g2);
 }
 
 int main(int argc, char const *argv[]){
