@@ -12,7 +12,7 @@ int main(int argc, char const *argv[]){
     unsigned short k_mers = 31;
     unsigned short n_threads = 8;
 
-    hyperloglog g1(fn_g1, k, n_threads, k_mers);
+    hyperloglog g1(fn_g1, k, n_threads);
     g1.calcular();
     cout << g1.resultado() << endl;
 

@@ -2,7 +2,6 @@
 
 class cardinalidad{
     protected:
-        bool test;
         bool calcular_ready;
         bool resultado_ready;
         size_t k_pow;
@@ -41,7 +40,7 @@ class cardinalidad{
                         _thread = 0;
                     }
                     _mutex.unlock();
-                    if(_cout && !test){
+                    if(_cout){
                         std::cout << "\33[2K\r";
                         std::chrono::duration<float,std::milli> duration = std::chrono::system_clock::now() - start;
                         std::cout <<"["<< ((float)global_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)global_cont/size) - duration.count()/60000 <<"m"<< std::endl;
@@ -78,13 +77,12 @@ class cardinalidad{
             }
         }
     public:
-        explicit cardinalidad(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31, bool test = 0){
+        explicit cardinalidad(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31){
             this->f_name = f_name;
             this->k = k;
             this->k_mers = k_mers;
             this->k_pow = (size_t)1<<k;
             this->n_threads = n_threads;
-            this->test = test;
 
             _thread = 0;
             global_cont = 0;
@@ -107,11 +105,9 @@ class cardinalidad{
             for (size_t i = 0; i < n_threads; i++) threads[i] = std::thread(&cardinalidad::read, this, i);
             for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
             auto duration = std::chrono::system_clock::now() - start;
-            if(!test){
-                std::cout << "\33[2K\r";
-                std::cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
-                    << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
-            }
+            std::cout << "\33[2K\r";
+            std::cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
+                << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
             calcular_ready = 1;
             return 1;
         }
