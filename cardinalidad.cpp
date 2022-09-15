@@ -2,8 +2,9 @@
 
 class cardinalidad{
     protected:
-        bool resultado_ready;
+        bool test;
         bool calcular_ready;
+        bool resultado_ready;
         size_t k_pow;
         size_t global_cont;
         unsigned short k;
@@ -40,7 +41,7 @@ class cardinalidad{
                         _thread = 0;
                     }
                     _mutex.unlock();
-                    if(_cout){
+                    if(_cout && !test){
                         std::cout << "\33[2K\r";
                         std::chrono::duration<float,std::milli> duration = std::chrono::system_clock::now() - start;
                         std::cout <<"["<< ((float)global_cont/size)*100 << "%] Tiempo restante "<< (duration.count()/60000)/((float)global_cont/size) - duration.count()/60000 <<"m"<< std::endl;
@@ -77,12 +78,13 @@ class cardinalidad{
             }
         }
     public:
-        explicit cardinalidad(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31){
+        explicit cardinalidad(std::string f_name, unsigned short k, unsigned short n_threads, unsigned short k_mers = 31, bool test = 0){
             this->f_name = f_name;
             this->k = k;
             this->k_mers = k_mers;
             this->k_pow = (size_t)1<<k;
             this->n_threads = n_threads;
+            this->test = test;
 
             _thread = 0;
             global_cont = 0;
@@ -105,10 +107,11 @@ class cardinalidad{
             for (size_t i = 0; i < n_threads; i++) threads[i] = std::thread(&cardinalidad::read, this, i);
             for (size_t i = 0; i < n_threads; i++) if(threads[i].joinable()) threads[i].join();
             auto duration = std::chrono::system_clock::now() - start;
-            std::cout << "\33[2K\r";
-            std::cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
-                << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
-            std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(duration).count()/(double)1000 <<"s;"; 
+            if(!test){
+                std::cout << "\33[2K\r";
+                std::cout <<"[100%]"<< "Tiempo total:" << std::chrono::duration_cast<std::chrono::seconds>(duration).count()/60 <<"m "
+                    << std::chrono::duration_cast<std::chrono::seconds>(duration).count()%60 <<"s" << std::endl;
+            }
             calcular_ready = 1;
             return 1;
         }
@@ -116,7 +119,7 @@ class cardinalidad{
 
 class hyperloglog: public cardinalidad{
     private:
-        double alpha;
+        long double alpha;
         unsigned short * buckets = new unsigned short[k_pow];
         unsigned short * b = new unsigned short[k_pow * n_threads];
     public:
@@ -147,16 +150,16 @@ class hyperloglog: public cardinalidad{
                 buckets[i] = _max;
             }
             size_t z_buckets = 0;
-            double res = 0;
+            long double res = 0;
             for (size_t i = 0; i < k_pow; i++){
                 if(z_buckets == 0) z_buckets++;
-                res += pow(2,-buckets[i]);
+                res += powl(2,-buckets[i]);
             }
-            res = (pow(k_pow,2)/res) * alpha;
+            res = (powl(k_pow,2)/res) * alpha;
             resultado_ready = 1;
-            if (res <= 5/2 * k_pow && z_buckets != 0) return k_pow*log(k_pow/(double)z_buckets);
-            else if (res <= 1/30 * pow(2,64)) return res;
-            else return -pow(2,64) * log(1.0 - (res/pow(2,64)));
+            if (res <= 5/2 * k_pow && z_buckets != 0) return (double)(k_pow*logl(k_pow/(double)z_buckets));
+            else if (res <= 1/30 * powl(2,64)) return (double)res;
+            else return (double)(-powl(2,64) * log(1.0 - (res/powl(2,64))));
         }
         unsigned short * giveme_buck(){
             if(!resultado_ready){
@@ -190,17 +193,50 @@ class pcsa: public cardinalidad{
             b[id * k_pow + s_k] = b[id * k_pow + s_k] | R(s_hashed);
         }
         double resultado(){
-            double phi = 0.77351;
+            long double phi = 0.77351;
             if(!calcular_ready) if(!calcular()) return 0;
             for (size_t i = 0; i < k_pow; i++){
                 size_t i_sketch = 0;
                 for (size_t j = 0; j < n_threads; j++) i_sketch = i_sketch | b[j * k_pow + i];
                 buckets[i] = i_sketch;
             }
-            double res = 0;
+            long double res = 0;
             for (size_t i = 0; i < k_pow; i++) res += __builtin_ctzll(~buckets[i]);
             res = res/k_pow;
             resultado_ready = 1;
-            return (k_pow*pow(2,res)/phi);
+            return (k_pow*powl(2,res)/phi);
         }
 };
+
+double _union(unsigned short k, hyperloglog * g1, hyperloglog * g2){
+    size_t k_pow = (size_t)1<<k;
+    long double alpha;
+    if(k_pow == 16) alpha = 0.673;
+    else if(k_pow == 32) alpha = 0.697;
+    else if(k_pow == 64) alpha = 0.709;
+    else alpha = 0.7213 / (1.0 + 1.079 / k_pow);
+    
+    unsigned short * b_g1 = g1->giveme_buck();
+    unsigned short * b_g2 = g2->giveme_buck();
+    unsigned short buckets[k_pow];
+    
+    for (size_t i = 0; i < k_pow; i++) buckets[i] = std::max(b_g1[i], b_g2[i]);
+    size_t z_buckets = 0;
+    long double res = 0;
+    for (size_t i = 0; i < k_pow; i++){
+        if(z_buckets == 0) z_buckets++;
+        res += powl(2,-buckets[i]);
+    }
+    res = (powl(k_pow,2)/res) * alpha;
+    if (res <= 5/2 * k_pow && z_buckets != 0) return (double)(k_pow*logl(k_pow/(double)z_buckets));
+    else if (res <= 1/30 * powl(2,64)) return (double)res;   //aquí hay un problema, no se puede almacenar 2^64 en un double (nuna entra aqui???)
+    else return (double)(-powl(2,64) * logl(1.0 - (res/powl(2,64))));
+}
+
+double _inter(unsigned short k, hyperloglog * g1, hyperloglog * g2){
+    return g1->resultado() + g2->resultado() - _union(k, g1, g2);
+}
+
+double _jaccard(unsigned short k, hyperloglog * g1, hyperloglog * g2){
+    return std::max(_inter(k, g1, g2) / _union(k, g1, g2), 0.0);
+}
